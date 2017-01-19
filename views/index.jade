@@ -1,0 +1,99 @@
+extends layout
+
+block head-css
+
+block head-js
+    
+block content
+    h1 钉钉微应用大赛
+    p #{msg}
+
+    h2 签名数据
+    pre !{JSON.stringify(data, null, 4)}
+
+    h2 授权信息
+    pre !{JSON.stringify(auth, null, 4)}
+
+    //button#J_auth_code 获取用户信息
+    h2 用户信息
+    pre#J_user_info
+
+    //h2 定位
+    //pre#J_user_location
+    
+
+block foot-js
+    script(src='//g.alicdn.com/platform/c/??zepto/1.1.6/zepto.min.js')
+    script(src='//g.alicdn.com/ilw/ding/0.9.9/scripts/dingtalk.js')
+    script.
+        var config = !{JSON.stringify(data) || '{}'};
+        dd.config({
+            agentId: config.agentId, // 必填，微应用ID
+            corpId: config.corpId,//必填，企业ID
+            timeStamp: config.timeStamp, // 必填，生成签名的时间戳
+            nonceStr: config.nonceStr, // 必填，生成签名的随机串
+            signature: config.sign, // 必填，签名
+            jsApiList: ['device.notification.alert', 'device.notification.confirm', 'device.geolocation.get', 'biz.map.locate'] // 必填，需要使用的jsapi列表
+        });
+        dd.ready(function(){
+            console.log('钉钉jsapi准备就绪')
+
+            //$('#J_auth_code').on('click', function(e) {
+                dd.runtime.permission.requestAuthCode({
+                    corpId: config.corpId,
+                    onSuccess: function(result) {
+                        $.getJSON('/app/userinfo', {
+                            corpId: config.corpId,
+                            code: result.code
+                        }, function(data, status, xhr) {
+                            if (data) {
+                                $('#J_user_info').text(JSON.stringify(data, null, 4))
+                                //- dd.device.notification.alert({
+                                //-     message: JSON.stringify(data, null, 4),
+                                //-     title: "用户信息",
+                                //-     buttonName: "收到",
+                                //-     onSuccess : function() {
+                                //-         //onSuccess将在点击button之后回调
+                                //-     },
+                                //-     onFail : function(err) {}
+                                //- });
+                            } else {
+                                dd.device.notification.alert({
+                                    message: '出错了',
+                                    title: "用户信息",
+                                    buttonName: "收到",
+                                    onSuccess : function() {
+                                        //onSuccess将在点击button之后回调
+                                    },
+                                    onFail : function(err) {}
+                                });
+                            }
+                            
+                        })
+                        
+                    },
+                    onFail : function(err) {
+                        alert(err)
+                    }
+                })
+            //});
+
+            //获取当前位置信息
+            //- dd.device.geolocation.get({
+            //-     targetAccuracy:"200",
+            //-     coordinate: 1,
+            //-     onSuccess: function(result) {
+            //-         $('#J_user_location').html(JSON.stringify(result, null, 4))
+            //-     },
+            //-     onFail: function() {
+            //-         alert('获取经纬度出错')
+            //-     }
+            //- })
+        });
+        dd.error(function(error){
+            alert('jsapi error' + JSON.stringify(error))
+            console.log(error)
+
+        });
+        
+
